@@ -577,7 +577,7 @@ class MarketAnalyzer:
 市场有风险，投资需谨慎。以上数据仅供参考，不构成投资建议。
 
 ---
-*复盘时间: {datetime.now().strftime('%H:%M')}*
+*复盘时间: {datetime.fromtimestamp(datetime.now().timestamp() + 8 * 3600).strftime('%H:%M')}*
 """
         return report
     
