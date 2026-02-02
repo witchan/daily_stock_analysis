@@ -943,8 +943,8 @@ class NotificationService:
             lines.append("")
         
         # 底部
-        lines.append(f"*生成时间: {datetime.now().strftime('%H:%M')}*")
-        
+        lines.append(f"*生成时间: {datetime.fromtimestamp(datetime.now().timestamp() + 8 * 3600).strftime('%H:%M')}*")
+       
         content = "\n".join(lines)
         
         return content
