@@ -21,10 +21,12 @@ export interface AnalysisRequest {
   selectionSource?: 'manual' | 'autocomplete' | 'import' | 'image';
   notify?: boolean;
   skills?: string[];
+  reportLanguage?: ReportLanguage;
 }
 
 export interface MarketReviewRequest {
   sendNotification?: boolean;
+  reportLanguage?: ReportLanguage;
 }
 
 export interface MarketReviewAccepted {
@@ -92,10 +94,14 @@ export type SentimentLabel =
   | 'Bullish'
   | 'Very Bullish';
 
+export type DecisionAction = 'buy' | 'add' | 'hold' | 'reduce' | 'sell' | 'watch' | 'avoid' | 'alert';
+
 /** Report summary section */
 export interface ReportSummary {
   analysisSummary: string;
   operationAdvice: string;
+  action?: DecisionAction | null;
+  actionLabel?: string | null;
   trendPrediction: string;
   sentimentScore: number;
   sentimentLabel?: SentimentLabel;
@@ -123,6 +129,56 @@ export interface SectorRankingItem {
 export interface SectorRankings {
   top?: SectorRankingItem[];
   bottom?: SectorRankingItem[];
+}
+
+export interface MarketReviewPayloadSection {
+  key?: string;
+  title: string;
+  markdown: string;
+}
+
+export interface MarketReviewIndex {
+  code: string;
+  name: string;
+  current?: number;
+  change?: number;
+  changePct?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  amount?: number;
+  amplitude?: number;
+}
+
+export interface MarketReviewBreadth {
+  upCount?: number;
+  downCount?: number;
+  flatCount?: number;
+  limitUpCount?: number;
+  limitDownCount?: number;
+  totalAmount?: number;
+  turnoverUnit?: string;
+}
+
+export interface MarketReviewPayload {
+  version?: number;
+  kind?: 'market_review' | string;
+  region?: string;
+  language?: ReportLanguage | string;
+  title?: string;
+  rootTitle?: string;
+  generatedAt?: string;
+  date?: string;
+  marketScope?: string;
+  marketLight?: Record<string, unknown>;
+  breadth?: MarketReviewBreadth;
+  indices?: MarketReviewIndex[];
+  sectors?: SectorRankings;
+  news?: Array<Record<string, unknown>>;
+  sections?: MarketReviewPayloadSection[];
+  markets?: Record<string, MarketReviewPayload>;
+  markdownReport?: string;
 }
 
 export type AnalysisContextPackBlockStatus =
@@ -190,7 +246,7 @@ export interface AnalysisContextPackOverview {
 export interface ReportDetails {
   newsContent?: string;
   rawResult?: Record<string, unknown>;
-  contextSnapshot?: Record<string, unknown>;
+  contextSnapshot?: Record<string, unknown> & { marketReviewPayload?: MarketReviewPayload };
   analysisContextPackOverview?: AnalysisContextPackOverview | null;
   financialReport?: Record<string, unknown>;
   dividendMetrics?: Record<string, unknown>;
@@ -288,10 +344,11 @@ export type AnalyzeResponse = AnalysisResult | AnalyzeAsyncResponse;
 export interface TaskStatus {
   taskId: string;
   traceId?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancel_requested' | 'cancelled';
   progress?: number;
   result?: AnalysisResult;
   marketReviewReport?: string;
+  marketReviewPayload?: MarketReviewPayload;
   error?: string;
   stockName?: string;
   originalQuery?: string;
@@ -306,7 +363,7 @@ export interface TaskInfo {
   traceId?: string;
   stockCode: string;
   stockName?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancel_requested' | 'cancelled';
   progress: number;
   message?: string;
   reportType: string;
@@ -349,11 +406,14 @@ export interface HistoryItem {
   analysisSummary?: string;
   sentimentScore?: number;
   operationAdvice?: string;
+  action?: DecisionAction | null;
+  actionLabel?: string | null;
   currentPrice?: number;
   changePct?: number;
   volumeRatio?: number;
   turnoverRate?: number;
   modelUsed?: string;  // Display-only model snapshot from persisted history; runtime provider/model/base URL still come from analyzer configuration
+  marketPhaseSummary?: MarketPhaseSummary | null;
   createdAt: string;
 }
 
@@ -389,6 +449,7 @@ export interface NewsIntelResponse {
 /** History filter parameters */
 export interface HistoryFilters {
   stockCode?: string;
+  reportType?: ReportType;
   startDate?: string;
   endDate?: string;
 }
@@ -408,9 +469,12 @@ export interface StockBarItem {
   reportType?: string;
   sentimentScore?: number;
   operationAdvice?: string;
+  action?: DecisionAction | null;
+  actionLabel?: string | null;
   analysisCount: number;
   lastAnalysisTime?: string;
   modelUsed?: string;
+  marketPhaseSummary?: MarketPhaseSummary | null;
 }
 
 export interface StockBarResponse {
